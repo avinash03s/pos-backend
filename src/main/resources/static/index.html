@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Multithreaded Java Practice Game</title>
+    <style>
+        body { font-family: sans-serif; text-align: center; background: #222; color: #fff; }
+        canvas { border: 4px solid #444; background: #111; margin-top: 20px; box-shadow: 0 0 15px rgba(0,0,0,0.5); }
+        .info { color: #aaa; font-size: 14px; }
+    </style>
+</head>
+<body>
+<h2>Java Multiplayer Practice Lab 🕹️</h2>
+<p class="info">Use <b>Arrow Keys</b> to move. Open another tab or invite a friend over Wi-Fi!</p>
+<canvas id="gameCanvas" width="600" height="400"></canvas>
+
+<script>
+    const canvas = document.getElementById("gameCanvas");
+    const ctx = canvas.getContext("2d");
+
+    // Java Server ke WebSocket pipe se connect hona
+    const socket = new WebSocket("ws://" + window.location.host + "/game");
+
+    // Jab bhi Java engine refresh coordinate data bhejega, yeh loop trigger hoga
+    socket.onmessage = (event) => {
+        const players = JSON.parse(event.data);
+
+        // Purane canvas screen ko wipe clean karna takii box purani jagah na dikhe
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        // Server par jitne bhi players hain, unhe screen par render karna
+        for (let id in players) {
+            ctx.fillStyle = "#00adb5"; // Cyan Color for Player Box
+            ctx.fillRect(players[id].x, players[id].y, 25, 25); // 25x25 size square
+
+            // Box ke upar player ki unique Network ID draw karna
+            ctx.fillStyle = "#666";
+            ctx.font = "10px Arial";
+            ctx.fillText(id.substring(0, 4), players[id].x, players[id].y - 5);
+        }
+    };
+
+    // User ke physical key press ko listen karna aur turant network par drop karna
+    window.addEventListener("keydown", (e) => {
+        if (e.key === "ArrowUp") socket.send("UP");
+        if (e.key === "ArrowDown") socket.send("DOWN");
+        if (e.key === "ArrowLeft") socket.send("LEFT");
+        if (e.key === "ArrowRight") socket.send("RIGHT");
+    });
+</script>
+</body>
+</html>
